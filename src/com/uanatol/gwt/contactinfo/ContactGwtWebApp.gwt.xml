@@ -17,7 +17,8 @@
 
 	<!-- Other module inherits -->
 	<inherits name="com.google.gwt.http.HTTP" />
-
+	<inherits name="com.google.gwt.json.JSON" />
+	
 	<!-- Specify the app entry point class. -->
 	<entry-point class='com.uanatol.gwt.contactinfo.client.ContactGwtWebApp' />
 

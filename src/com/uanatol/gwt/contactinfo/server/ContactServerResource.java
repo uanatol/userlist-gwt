@@ -7,8 +7,8 @@ import org.restlet.resource.ServerResource;
 
 import com.google.appengine.api.datastore.Entity;
 
-
-public class ContactServerResource extends ServerResource {
+public class ContactServerResource extends ServerResource implements
+		ContactResource {
 
 	public void remove(List<String> contactKeys) {
 		Contact.delete(contactKeys);
@@ -16,12 +16,13 @@ public class ContactServerResource extends ServerResource {
 
 	public void store(ContactInfo contactInfo) {
 		String userName = contactInfo.getUserName();
+		String birthDate = contactInfo.getBirthDate();		
 		if (!userName.isEmpty()) {
-			Contact.store(contactInfo.getUserName(), contactInfo.getBirthDate());
+			Contact.store(userName, birthDate);
 		}
 	}
 
-	public List<ContactInfo> retrieve() {
+	public ContactInfoArray retrieve() {
 		List<Entity> entityList = Contact.retrieveAll();
 		List<ContactInfo> contactInfoList = new ArrayList<ContactInfo>();
 		for (Entity entity : entityList) {
@@ -38,7 +39,7 @@ public class ContactServerResource extends ServerResource {
 			contactInfo.setBirthDate(birthdate.toString());
 			contactInfoList.add(contactInfo);
 		}
-		return contactInfoList;
+		return new ContactInfoArray(contactInfoList);
 	}
 
 }

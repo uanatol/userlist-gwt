@@ -8,7 +8,7 @@ import org.restlet.resource.Put;
 
 public interface ContactResource {
 	@Get("json")
-	public List<ContactInfo> retrieve();
+	public ContactInfoArray retrieve();
 
 	@Put("json")
 	public void store(ContactInfo contact);

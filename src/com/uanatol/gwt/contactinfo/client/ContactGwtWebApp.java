@@ -3,6 +3,7 @@ package com.uanatol.gwt.contactinfo.client;
 import com.uanatol.gwt.contactinfo.shared.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -14,8 +15,12 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
@@ -45,20 +50,27 @@ public class ContactGwtWebApp implements EntryPoint {
 
 	public void onModuleLoad() {
 
+		// Create the table for the input data data.
 		final FlexTable usersFlexTable = new FlexTable();
-		// Create the table for user data.
 		usersFlexTable.setText(0, 0, "User Name");
 		usersFlexTable.setText(0, 1, "Birth Date");
 		final Button addButton = new Button("Add");
 		usersFlexTable.setWidget(0, 2, addButton);
 		final Button removeButton = new Button("Remove");
 		usersFlexTable.setWidget(0, 3, removeButton);
+		final Button reloadButton = new Button("Reload");
+		usersFlexTable.setWidget(0, 4, reloadButton);
 		final TextBox userNameField = new TextBox();
 		final TextBox birthDateNameField = new TextBox();
 		usersFlexTable.setWidget(1, 0, userNameField);
 		usersFlexTable.setWidget(1, 1, birthDateNameField);
+		final CheckBox chechBox = new CheckBox();
+		chechBox.setValue(true);
+		chechBox.setEnabled(false);
+		usersFlexTable.setWidget(1, 2, chechBox);
+		RootPanel.get("inputFieldContainer").add(usersFlexTable);
+
 		final Label errorLabel = new Label();
-		RootPanel.get("nameFieldContainer").add(usersFlexTable);
 		RootPanel.get("errorLabelContainer").add(errorLabel);
 
 		// Create the popup dialog box
@@ -88,9 +100,136 @@ public class ContactGwtWebApp implements EntryPoint {
 				addButton.setFocus(true);
 			}
 		});
-		
+
+		// Add a handler to close the DialogBox
+		reloadButton.addClickHandler(new ClickHandler() {
+			public void onClick(ClickEvent event) {
+				dialogBox.hide();
+				addButton.setEnabled(true);
+				addButton.setFocus(true);
+			}
+		});
+
 		// Create a handler for the addButton and TextBoxes fields
-		class MyHandler implements ClickHandler, KeyUpHandler {
+		class ReloadHandler implements ClickHandler, KeyUpHandler {
+			/**
+			 * Fired when the user clicks on the sendButton.
+			 */
+			public void onClick(ClickEvent event) {
+				reloadDataToServer();
+			}
+
+			/**
+			 * Fired when the user types in the nameField.
+			 */
+			public void onKeyUp(KeyUpEvent event) {
+				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+					reloadDataToServer();
+				}
+			}
+
+			/**
+			 * Send the name from the nameField to the server and wait for a
+			 * response.
+			 */
+			public void reloadDataToServer() {
+				// First, we validate the input.
+				errorLabel.setText("");
+
+				// Then, we send the input to the server.
+				addButton.setEnabled(false);
+				// Json string
+
+				textToServerLabel.setText("");
+				serverResponseLabel.setText("");
+
+				String url = GWT.getHostPageBaseURL() + "rest/users/all";
+				RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
+						URL.encode(url));
+				// builder.setHeader("Content-Type",
+				// "application/json; charset=UTF-8");
+				try {
+					Request request = builder.sendRequest(null,
+							new RequestCallback() {
+								public void onError(Request request,
+										Throwable exception) {
+									// Couldn't connect to server (could be
+									// timeout, SOP violation, etc.)
+								}
+
+								public void onResponseReceived(Request request,
+										Response response) {
+									if (200 == response.getStatusCode()) {
+										/*
+										 * dialogBox.setText("Http GET request");
+										 * serverResponseLabel .removeStyleName(
+										 * "serverResponseLabelError");
+										 * serverResponseLabel.setHTML(response
+										 * .getText()); dialogBox.center();
+										 * closeButton.setFocus(true);
+										 */
+										String jsonText = response.getText();
+										JSONValue jsonValue = JSONParser
+												.parseStrict(jsonText);
+										JSONObject jsonObject = jsonValue
+												.isObject();
+										if (jsonObject == null) {
+											throw new RuntimeException(
+													"JSON payload did not describe an object");
+										}
+										ContactInfoArrayJso contacts = jsonObject
+												.getJavaScriptObject().cast();
+
+										JsArray<ContactInfoJso> cs = contacts
+												.getContactsInfo();
+										int count = usersFlexTable
+												.getRowCount();
+										for (int i = 2; i < count; i++) {
+											usersFlexTable.removeRow(2);
+										}
+
+										if ((cs != null) && (cs.length() > 0)) {
+											for (int i = 0, n = cs.length(); i < n; ++i) {
+												int row = i + 2;
+												usersFlexTable
+														.setText(row, 0, cs
+																.get(i)
+																.getUserName());
+												usersFlexTable
+														.setText(row, 1, cs
+																.get(i)
+																.getBirthDate());
+												final CheckBox checkBox = new CheckBox();
+												checkBox.setValue(false);
+												checkBox.setEnabled(true);
+												usersFlexTable.setWidget(row,
+														3, checkBox);
+											}
+										}
+										closeButton.setEnabled(true);
+									} else {
+										// Handle the error. Can get the status
+										// text from response.getStatusText()
+										dialogBox
+												.setText("Http GET request - Failure");
+										serverResponseLabel
+												.addStyleName("serverResponseLabelError");
+										serverResponseLabel.setHTML(response
+												.getStatusText());
+										dialogBox.center();
+										closeButton.setFocus(true);
+									}
+								}
+							});
+					closeButton.setEnabled(true);
+				} catch (RequestException e) {
+					// Couldn't connect to server
+				}
+			}
+		}
+
+		// Create a handler for the addButton and TextBoxes fields
+		class AddDataHandler implements ClickHandler, KeyUpHandler {
 			/**
 			 * Fired when the user clicks on the sendButton.
 			 */
@@ -128,15 +267,17 @@ public class ContactGwtWebApp implements EntryPoint {
 				// Then, we send the input to the server.
 				addButton.setEnabled(false);
 				// Json string
-				String json = "\"{\"userName\": \"" + userNameToServer + "\","
-						+ "\"birthDate\": \"" + birthDateToServer + "\"}\"";
+				String json = "{\"userName\": \"" + userNameToServer + "\","
+						+ "\"birthDate\": \"" + birthDateToServer + "\"}";
 
 				textToServerLabel.setText(json);
 				serverResponseLabel.setText("");
 
-				String url=GWT.getHostPageBaseURL() + "rest/users/all";
+				String url = GWT.getHostPageBaseURL() + "rest/users/add";
 				RequestBuilder builder = new RequestBuilder(RequestBuilder.PUT,
 						URL.encode(url));
+				builder.setHeader("Content-Type",
+						"application/json; charset=UTF-8");
 				try {
 					Request request = builder.sendRequest(json,
 							new RequestCallback() {
@@ -149,15 +290,15 @@ public class ContactGwtWebApp implements EntryPoint {
 								public void onResponseReceived(Request request,
 										Response response) {
 									if (200 == response.getStatusCode()) {
-										// Process the response in
-										// response.getText()
-										dialogBox.setText("Http request");
-										serverResponseLabel
-												.removeStyleName("serverResponseLabelError");
-										serverResponseLabel.setHTML(response
-												.getText());
-										dialogBox.center();
-										closeButton.setFocus(true);
+										/*
+										 * dialogBox.setText("Http request");
+										 * serverResponseLabel .removeStyleName(
+										 * "serverResponseLabelError");
+										 * serverResponseLabel.setHTML(response
+										 * .getText()); dialogBox.center();
+										 * closeButton.setFocus(true);
+										 */
+										closeButton.setEnabled(true);
 									} else {
 										// Handle the error. Can get the status
 										// text from response.getStatusText()
@@ -165,13 +306,14 @@ public class ContactGwtWebApp implements EntryPoint {
 												.setText("Http request - Failure");
 										serverResponseLabel
 												.addStyleName("serverResponseLabelError");
-										serverResponseLabel
-												.setHTML(response.getStatusText());
+										serverResponseLabel.setHTML(response
+												.getStatusText());
 										dialogBox.center();
 										closeButton.setFocus(true);
 									}
 								}
 							});
+					closeButton.setEnabled(true);
 				} catch (RequestException e) {
 					// Couldn't connect to server
 				}
@@ -179,9 +321,12 @@ public class ContactGwtWebApp implements EntryPoint {
 		}
 
 		// Add a handler to send the name to the server
-		MyHandler handler = new MyHandler();
+		AddDataHandler handler = new AddDataHandler();
+		ReloadHandler reloadHandler = new ReloadHandler();
 		addButton.addClickHandler(handler);
 		birthDateNameField.addKeyUpHandler(handler);
+		reloadButton.addClickHandler(reloadHandler);
+		reloadHandler.reloadDataToServer();
 	}
 
 	/**
