@@ -14,5 +14,5 @@ public interface ContactResource {
 	public void store(ContactInfo contact);
 
 	@Post("json")
-	public void remove(List<String> contact);
+	public void remove(List<String> contactKeys);
 }

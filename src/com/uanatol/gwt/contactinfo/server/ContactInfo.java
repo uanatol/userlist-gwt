@@ -1,6 +1,5 @@
 package com.uanatol.gwt.contactinfo.server;
 
-
 public class ContactInfo {
 
 	private String userName;

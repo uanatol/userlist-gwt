@@ -30,16 +30,6 @@
 		<servlet-name>Testing</servlet-name>
 		<url-pattern>/testing</url-pattern>
 	</servlet-mapping>
-		
-  <servlet>
-    <servlet-name>greetServlet</servlet-name>
-    <servlet-class>com.uanatol.gwt.contactinfo.server.GreetingServiceImpl</servlet-class>
-  </servlet>
-  
-  <servlet-mapping>
-    <servlet-name>greetServlet</servlet-name>
-    <url-pattern>/contactgwtwebapp/greet</url-pattern>
-  </servlet-mapping>
   
   <!-- Default page to serve -->
   <welcome-file-list>
