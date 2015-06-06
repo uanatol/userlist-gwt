@@ -1,0 +1,7 @@
+gwt-unitCache
+.gitignore~
+war/WEB-INF/appengine-generated/
+war/WEB-INF/classes/
+war/WEB-INF/deploy/contactgwtwebapp/symbolMaps/
+war/contactgwtwebapp/*.js
+war/contactgwtwebapp/compilation-mappings.txt

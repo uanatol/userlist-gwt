@@ -43,11 +43,6 @@ public class ContactGwtWebApp implements EntryPoint {
 			+ "attempting to contact the server. Please check your network "
 			+ "connection and try again.";
 
-	/**
-	 * Create a remote service proxy to talk to the server-side Greeting
-	 * service.
-	 */
-
 	final FlexTable usersFlexTable = new FlexTable();
 	final Button addButton = new Button("Add");
 	final Button removeButton = new Button("Remove");
@@ -80,7 +75,7 @@ public class ContactGwtWebApp implements EntryPoint {
 		RootPanel.get("errorLabelContainer").add(errorLabel);
 
 		// Create the popup dialog box
-		dialogBox.setText("Remote Procedure Call");
+		dialogBox.setText("Restlet Call");
 		dialogBox.setAnimationEnabled(true);
 		// We can set the id of a widget by accessing its Element
 		closeButton.getElement().setId("closeButton");
@@ -98,8 +93,7 @@ public class ContactGwtWebApp implements EntryPoint {
 		closeButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
 				dialogBox.hide();
-				addButton.setEnabled(true);
-				addButton.setFocus(true);
+				userNameField.setFocus(true);
 			}
 		});
 
@@ -107,14 +101,14 @@ public class ContactGwtWebApp implements EntryPoint {
 		reloadButton.addClickHandler(new ClickHandler() {
 			public void onClick(ClickEvent event) {
 				dialogBox.hide();
-				addButton.setEnabled(true);
-				addButton.setFocus(true);
+				userNameField.setFocus(true);				
 			}
 		});
 
-		// Add a handler to send the name to the server
+		// Add handlers
 		addButton.addClickHandler(addHandler);
 		birthDateNameField.addKeyUpHandler(addHandler);
+		userNameField.addKeyUpHandler(addHandler);
 		reloadButton.addClickHandler(reloadHandler);
 		removeButton.addClickHandler(removeHandler);
 		reloadHandler.loadData();
@@ -130,14 +124,18 @@ public class ContactGwtWebApp implements EntryPoint {
 		 */
 		public void onClick(ClickEvent event) {
 			uploadData();
+			userNameField.setFocus(true);	
 		}
 
 		/**
-		 * Fired when the user types in the nameField.
+		 * Fired when the user types in text fields
 		 */
 		public void onKeyUp(KeyUpEvent event) {
 			if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
 				uploadData();
+			}
+			else {
+				addButton.setEnabled(true);
 			}
 		}
 
@@ -186,46 +184,40 @@ public class ContactGwtWebApp implements EntryPoint {
 								int responseCode = response.getStatusCode();
 								if ((200 == responseCode)
 										|| (204 == responseCode)) {
-									/*
-									 * dialogBox.setText("Http request");
-									 * serverResponseLabel .removeStyleName(
-									 * "serverResponseLabelError");
-									 * serverResponseLabel.setHTML(response
-									 * .getText()); dialogBox.center();
-									 * closeButton.setFocus(true);
-									 */
-									closeButton.setEnabled(true);
 									reloadHandler.loadData();
 								} else {
 									// Handle the error. Can get the status
 									// text from response.getStatusText()
-									dialogBox.setText("Http request - Failure");
-									serverResponseLabel
-											.addStyleName("serverResponseLabelError");
-									serverResponseLabel.setHTML(response
-											.getStatusCode()
-											+ " : "
-											+ response.getStatusText());
-									dialogBox.center();
-									closeButton.setFocus(true);
+									errorMessage(response);
+									closeButton.setEnabled(true);
+									closeButton.setFocus(true);	
 								}
 							}
 						});
-				closeButton.setEnabled(true);
 			} catch (RequestException e) {
-				// Couldn't connect to server				
+				// Couldn't connect to server
 				dialogBox.setText("Server Error");
-				serverResponseLabel
-						.addStyleName("serverResponseLabelError");
+				serverResponseLabel.addStyleName("serverResponseLabelError");
 				serverResponseLabel.setHTML(SERVER_ERROR);
 				dialogBox.center();
 				closeButton.setFocus(true);
 			}
 		}
+		
+		private void errorMessage(Response response) {
+			dialogBox.setText("Http request - Failure");
+			serverResponseLabel
+					.addStyleName("serverResponseLabelError");
+			serverResponseLabel.setHTML(response
+					.getStatusCode()
+					+ " : "
+					+ response.getStatusText());
+			dialogBox.center();			
+		}
 	}
 
 	// Create a handler for the addButton and TextBoxes fields
-	class ReloadHandler implements ClickHandler, KeyUpHandler {
+	class ReloadHandler implements ClickHandler {
 
 		final String restPath = "rest/users/all";
 
@@ -234,15 +226,7 @@ public class ContactGwtWebApp implements EntryPoint {
 		 */
 		public void onClick(ClickEvent event) {
 			loadData();
-		}
-
-		/**
-		 * Fired when the user types in the nameField.
-		 */
-		public void onKeyUp(KeyUpEvent event) {
-			if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-				loadData();
-			}
+			userNameField.setFocus(true);	
 		}
 
 		/**
@@ -275,14 +259,6 @@ public class ContactGwtWebApp implements EntryPoint {
 							public void onResponseReceived(Request request,
 									Response response) {
 								if (200 == response.getStatusCode()) {
-									/*
-									 * dialogBox.setText("Http GET request");
-									 * serverResponseLabel .removeStyleName(
-									 * "serverResponseLabelError");
-									 * serverResponseLabel.setHTML(response
-									 * .getText()); dialogBox.center();
-									 * closeButton.setFocus(true);
-									 */
 									String jsonText = response.getText();
 									JSONValue jsonValue = JSONParser
 											.parseStrict(jsonText);
@@ -316,25 +292,28 @@ public class ContactGwtWebApp implements EntryPoint {
 													checkBox);
 										}
 									}
-									closeButton.setEnabled(true);
 								} else {
 									// Handle the error. Can get the status
 									// text from response.getStatusText()
-									dialogBox
-											.setText("Http GET request - Failure");
-									serverResponseLabel
-											.addStyleName("serverResponseLabelError");
-									serverResponseLabel.setHTML(response
-											.getStatusText());
-									dialogBox.center();
-									closeButton.setFocus(true);
+									errorMessage(response);
+									closeButton.setEnabled(true);
+									closeButton.setFocus(true);	
 								}
 							}
 						});
-				closeButton.setEnabled(true);
 			} catch (RequestException e) {
 				// Couldn't connect to server
 			}
+		}
+		private void errorMessage(Response response) {
+			dialogBox.setText("Http request - Failure");
+			serverResponseLabel
+					.addStyleName("serverResponseLabelError");
+			serverResponseLabel.setHTML(response
+					.getStatusCode()
+					+ " : "
+					+ response.getStatusText());
+			dialogBox.center();			
 		}
 	}
 
@@ -348,6 +327,7 @@ public class ContactGwtWebApp implements EntryPoint {
 		 */
 		public void onClick(ClickEvent event) {
 			removeData();
+			userNameField.setFocus(true);	
 		}
 
 		/**
@@ -359,13 +339,13 @@ public class ContactGwtWebApp implements EntryPoint {
 			errorLabel.setText("");
 			textToServerLabel.setText("");
 			serverResponseLabel.setText("");
-			
+
 			List<String> userName = new ArrayList<String>();
 			List<String> birthDate = new ArrayList<String>();
-			int count = usersFlexTable.getRowCount();			
+			int count = usersFlexTable.getRowCount();
 			for (int i = 2; i < count; i++) {
-				CheckBox checkBox = (CheckBox)usersFlexTable.getWidget(i, 3);				
-				if(checkBox.getValue() == true) {
+				CheckBox checkBox = (CheckBox) usersFlexTable.getWidget(i, 3);
+				if (checkBox.getValue() == true) {
 					userName.add(usersFlexTable.getText(i, 0));
 					birthDate.add(usersFlexTable.getText(i, 1));
 				}
@@ -375,7 +355,8 @@ public class ContactGwtWebApp implements EntryPoint {
 			for (int i = 0; i < size - 1; i++) {
 				json = json + "\"" + userName.get(i) + birthDate.get(i) + "\",";
 			}
-			json = json + "\"" + userName.get(size-1) + birthDate.get(size-1) + "\"";			
+			json = json + "\"" + userName.get(size - 1)
+					+ birthDate.get(size - 1) + "\"";
 			json = json + "]";
 			String url = GWT.getHostPageBaseURL() + restPath;
 			RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
@@ -395,36 +376,30 @@ public class ContactGwtWebApp implements EntryPoint {
 								int responseCode = response.getStatusCode();
 								if ((200 == responseCode)
 										|| (204 == responseCode)) {
-									/*
-									 * dialogBox.setText("Http request");
-									 * serverResponseLabel .removeStyleName(
-									 * "serverResponseLabelError");
-									 * serverResponseLabel.setHTML(response
-									 * .getText()); dialogBox.center();
-									 * closeButton.setFocus(true);
-									 */
-									closeButton.setEnabled(true);
 									reloadHandler.loadData();
 								} else {
 									// Handle the error. Can get the status
 									// text from response.getStatusText()
-									dialogBox
-											.setText("Http POST request - Failure ");
-									serverResponseLabel
-											.addStyleName("serverResponseLabelError");
-									serverResponseLabel.setHTML(response
-											.getStatusCode()
-											+ " : "
-											+ response.getStatusText());
-									dialogBox.center();
-									closeButton.setFocus(true);
+									errorMessage(response);
+									closeButton.setEnabled(true);
+									closeButton.setFocus(true);									
 								}
 							}
-						});
-				closeButton.setEnabled(true);
+						});								
 			} catch (RequestException e) {
 				// Couldn't connect to server
 			}
 		}
+		
+		private void errorMessage(Response response) {
+			dialogBox.setText("Http request - Failure");
+			serverResponseLabel
+					.addStyleName("serverResponseLabelError");
+			serverResponseLabel.setHTML(response
+					.getStatusCode()
+					+ " : "
+					+ response.getStatusText());
+			dialogBox.center();			
+		}		
 	}
 }

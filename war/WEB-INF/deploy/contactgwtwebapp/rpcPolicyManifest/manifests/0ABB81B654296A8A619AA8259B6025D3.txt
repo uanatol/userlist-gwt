@@ -1,2 +1,0 @@
-serviceClass: com.uanatol.gwt.contactinfo.client.GreetingService
-path: FAAD48077D7BBCA4F09A9E255D8DD525.gwt.rpc
