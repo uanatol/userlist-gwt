@@ -9,12 +9,12 @@ public class ContactInfoJso extends JavaScriptObject {
 	}
 
 	// Typically, methods on overlay types are JSNI
-	public final native String getUserName() /*-{
-		return this.userName;
+	public final native String getFirstName() /*-{
+		return this.firstName;
 	}-*/;
 
-	public final native String getBirthDate() /*-{
-		return this.birthDate;
+	public final native String getLastName() /*-{
+		return this.lastName;
 	}-*/;
 
 }

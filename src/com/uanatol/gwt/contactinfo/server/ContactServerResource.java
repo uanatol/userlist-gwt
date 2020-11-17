@@ -5,41 +5,49 @@ import java.util.List;
 
 import org.restlet.resource.ServerResource;
 
-import com.google.appengine.api.datastore.Entity;
+import com.google.cloud.datastore.Entity;
+import com.google.cloud.datastore.StringValue;
+import com.uanatol.gwt.contactinfo.shared.FieldVerifier;
 
-public class ContactServerResource extends ServerResource implements
-		ContactResource {
+public class ContactServerResource extends ServerResource implements ContactResource {
 
 	public void remove(List<String> contactKeys) {
 		Contact.delete(contactKeys);
 	}
 
 	public void store(ContactInfo contactInfo) {
-		String userName = contactInfo.getUserName();
-		String birthDate = contactInfo.getBirthDate();		
-		if (!userName.isEmpty()) {
-			Contact.store(userName, birthDate);
-		}
+		String firstName = contactInfo.getFirstName();
+		String lastName = contactInfo.getLastName();
+		assert !FieldVerifier.isValidName(firstName) : "First name must be at least four characters";
+		assert !FieldVerifier.isValidName(lastName) : "Last name must be at least four characters";
+		Contact.store(firstName, lastName);
 	}
 
 	public ContactInfoArray retrieve() {
 		List<Entity> entityList = Contact.retrieveAll();
 		List<ContactInfo> contactInfoList = new ArrayList<ContactInfo>();
 		for (Entity entity : entityList) {
-			Object usrname = entity.getProperty("userName");
-			if (usrname == null) {
-				continue;
+			String firstName = null;
+			String lastName = null;
+			for (String name : entity.getNames()) {
+				if ("firstName".equals(name)) {
+					if (entity.getValue(name) instanceof StringValue) {
+						firstName = entity.getString(name);
+					}
+				}
+				if ("lastName".equals(name)) {
+					if (entity.getValue(name) instanceof StringValue) {
+						lastName = entity.getString(name);
+					}
+				}
 			}
-			Object birthdate = entity.getProperty("birthDate");
-			if (birthdate == null) {
-				continue;
+			if (firstName != null && lastName != null) {
+				ContactInfo contactInfo = new ContactInfo();
+				contactInfo.setFirstName(firstName);
+				contactInfo.setLastName(lastName);
+				contactInfoList.add(contactInfo);
 			}
-			ContactInfo contactInfo = new ContactInfo();
-			contactInfo.setUserName(usrname.toString());
-			contactInfo.setBirthDate(birthdate.toString());
-			contactInfoList.add(contactInfo);
 		}
 		return new ContactInfoArray(contactInfoList);
 	}
-
 }

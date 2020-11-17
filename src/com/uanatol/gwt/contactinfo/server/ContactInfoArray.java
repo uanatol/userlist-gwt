@@ -5,9 +5,8 @@ import java.util.List;
 public class ContactInfoArray {
 
 	private List<ContactInfo> contacts;
-	
+
 	public ContactInfoArray(List<ContactInfo> contacts) {
-		//super();
 		this.contacts = contacts;
 	}
 
@@ -19,4 +18,15 @@ public class ContactInfoArray {
 		this.contacts = contacts;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("***** Employee Details *****\n");
+		for (ContactInfo contact : contacts) {
+			sb.append("FirstName=" + contact.getFirstName() + " ");
+			sb.append("LastName=" + contact.getLastName() + "\n");
+		}
+		sb.append("*****************************");
+		return sb.toString();
+	}
 }

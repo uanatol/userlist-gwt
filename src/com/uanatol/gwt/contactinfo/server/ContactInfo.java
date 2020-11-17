@@ -2,31 +2,31 @@ package com.uanatol.gwt.contactinfo.server;
 
 public class ContactInfo {
 
-	private String userName;
-	private String birthDate;
+	private String firstName;
+	private String lastName;
 
-	public String getUserName() {
-		return userName;
+	public String getFirstName() {
+		return firstName;
 	}
 
-	public void setUserName(String userName) {
-		this.userName = userName;
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
 	}
 
-	public String getBirthDate() {
-		return birthDate;
+	public String getLastName() {
+		return lastName;
 	}
 
-	public void setBirthDate(String birthDate) {
-		this.birthDate = birthDate;
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("***** Employee Details *****\n");
-		sb.append("Name=" + getUserName() + "\n");
-		sb.append("BirthDate=" + getBirthDate() + "\n");
+		sb.append("FirstName=" + getFirstName() + "\n");
+		sb.append("LastName=" + getLastName() + "\n");
 		sb.append("*****************************");
 
 		return sb.toString();
